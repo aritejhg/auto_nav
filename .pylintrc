@@ -1,0 +1,6 @@
+[MASTER]
+init-hook='import sys; sys.path.append("/opt/ros/kinetic/lib/python2.7/dist-packages/")'
+
+[MESSAGES CONTROL]
+disable=missing-docstring, wrong-import-order, invalid-name
+disable=bad-whitespace, line-too-long
