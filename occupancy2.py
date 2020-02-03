@@ -46,10 +46,21 @@ def callback(msg, tfBuffer):
     odata = np.uint8(oc3.reshape(msg.info.width,msg.info.height,order='F'))
     # create image from 2D array using PIL
     img = Image.fromarray(odata)
+    ######  Translate the map centre to the robot
+    trans2 = tfBuffer.lookup_transform('map', 'base_link', rospy.Time(0))
+    robotX = (trans2.transform.translation.x - msg.info.origin.position.x) / msg.info.resolution
+    robotY = (trans2.transform.translation.y - msg.info.origin.position.y) / msg.info.resolution
+    diffX = robotX - 0.5 * img.size[0]
+    diffY = robotY - 0.5 * img.size[1]
+    img = img.transform(img.size, Image.AFFINE, (1, 0, diffY, 0, 1, diffX), fill=0)
+    ######
     # rotate by 180 degrees to invert map so that the forward direction is at the top of the image
     rotated = img.rotate(np.degrees(yaw)+180)
     # show image using grayscale map
     plt.imshow(rotated,cmap='gray')
+    ######
+    # plt.plot(img.size[0]/2, img.size[1]/2, 'y+')  # Optionally mark the centre
+    ######
     plt.draw_all()
     # pause to make sure the plot gets created
     plt.pause(0.00000000001)
