@@ -25,6 +25,9 @@
     <arg name="model" value="$(arg model)" />
     <arg name="move_forward_only" value="$(arg move_forward_only)"/>
   </include>
+  <rosparam command="load" ns="move_base/DWAPlannerROS" file="$(find auto_nav)/param/dwaplanner.yaml"/>
+  <rosparam command="load" ns="move_base/local_costmap" file="$(find auto_nav)/param/cost_map.yaml"/>
+  <rosparam command="load" ns="move_base/global_costmap" file="$(find auto_nav)/param/cost_map.yaml"/>
 
   <!-- rviz -->
   <group if="$(arg open_rviz)"> 
