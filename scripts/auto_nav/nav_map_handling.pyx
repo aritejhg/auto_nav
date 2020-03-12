@@ -19,8 +19,8 @@ def MapDilateErode(np.ndarray mArray):
     cdef np.ndarray mc = np.zeros([h, w], dtype=DTYPE)
     cdef int i = 1
     cdef int j = 1
-    
     while i < h - 1:
+        j = 1
         while j < w - 1:
             if mArray[i, j] != 2 and CheckNeighboursOr(mArray, i, j, 2):
                 mc[i, j] = 2    # dilate the wall cells
@@ -30,5 +30,4 @@ def MapDilateErode(np.ndarray mArray):
                 mc[i, j] = mArray[i, j]
             j += 1
         i += 1
-
     return mc

@@ -56,10 +56,12 @@ class AutoNav:
         # Mark points with 0 for unmapped, 1 for empty, 2 for wall
         mData = np.uint8((mData > 0).choose(mData + 1,2))
         # Smooth the map by dilation and erosion
-        nData = MapDilateErode(mData)
+        t = time.time()
+        mData = MapDilateErode(mData)
+        print(time.time() - t)
         # Plot the map
         if s._plt:
-            plt.imshow(nData, cmap='gray')
+            plt.imshow(mData, cmap='gray')
             plt.draw_all()
             plt.pause(0.00000000001)
 
