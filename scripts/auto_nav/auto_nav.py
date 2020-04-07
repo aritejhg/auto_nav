@@ -8,9 +8,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-import pyximport
-pyximport.install()
-from nav_map_handling import MapDilateErode
+# # Cython nav_map_handling.pyx (Too slow, do not use)
+# import pyximport
+# pyximport.install()
+# from nav_map_handling import MapDilateErode
+
+from navMapProc_wrp import MapDilateErode
 
 class AutoNav: 
 
@@ -31,6 +34,7 @@ class AutoNav:
     def spin(self):
         if self._plt:
             plt.ion()
+            plt.tight_layout()
             plt.show()
         while not rospy.is_shutdown():
             try:
