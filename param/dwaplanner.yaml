@@ -2,11 +2,11 @@
 max_vel_x: 0.1  #0.22
 min_vel_x: -0.1 #-0.22, overriding move_forward_only
 
-max_trans_vel: 0.1  #0.22
-min_trans_vel: 0.05 #0.11
+max_trans_vel: 0.06  #0.22
+min_trans_vel: 0.03 #0.11
 
-max_rot_vel: 1.5  #2.75
-min_rot_vel: 0.6  #1.37
+max_rot_vel: 0.5  #2.75
+min_rot_vel: 0.2  #1.37
 
-xy_goal_tolerance: 0.05   #0.05
-yaw_goal_tolerance: 0.17  #0.17
+xy_goal_tolerance: 0.1   #0.05
+yaw_goal_tolerance: 0.22  #0.17

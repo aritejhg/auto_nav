@@ -1,6 +1,6 @@
 
-obstacle_range: 1.5 #3
-raytrace_range: 3.5 #3.5
+obstacle_range: 3.5 #3
+raytrace_range: 4 #3.5
 
-inflation_radius: 0.5     #1
-cost_scaling_factor: 1.5  #3
+inflation_radius: 1   #1
+cost_scaling_factor: 3  #3
