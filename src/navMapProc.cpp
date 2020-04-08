@@ -1,6 +1,5 @@
 #include <cstdint>
 #include <cmath>
-// #include <cstdio>
 #include <vector>
 #include <stack>
 #include <algorithm>
@@ -36,11 +35,13 @@ void implMapDilateErode (uint8_t *mapArr, int height, int width);
 extern "C" void MapDilateErode (uint8_t *mapArr, int height, int width) 
     {implMapDilateErode(mapArr, height, width);}
 
-int implFindNavGoal (uint8_t *mapArr, int height, int width, int posY, int posX, int *res);
-extern "C" int FindNavGoal (uint8_t *mapArr, int height, int width, int posY, int posX, int *res)
-    {return implFindNavGoal (mapArr, height, width, posY, posX, res);}
+int implFindNavGoal (uint8_t *mapArr, int height, int width, int posY, int posX, int *res, float *resDir);
+extern "C" int FindNavGoal (uint8_t *mapArr, int height, int width, int posY, int posX, int *res, float *resDir)
+    {return implFindNavGoal (mapArr, height, width, posY, posX, res, resDir);}
 
 point_t findCentre (vector<point_t> pts);
+float findDirection (point_t a, point_t b);
+float diffSmallerDirection (float a, float b);
 
 /* FUNCTION IMPLEMENTATIONS */
 
@@ -57,7 +58,7 @@ void implMapDilateErode (uint8_t *mapArr, int height, int width)
     }
 }
 
-int implFindNavGoal (uint8_t *mapArr, int height, int width, int posY, int posX, int *res)
+int implFindNavGoal (uint8_t *mapArr, int height, int width, int posY, int posX, int *res, float *resDir)
 {
     uint8_t mapA[MAXSIZEY][MAXSIZEX], mapB[MAXSIZEY][MAXSIZEX];
     LOOPTHROUGH_2D(i, height, j, width) mapA[i][j] = mapArr[i*width+j];
@@ -103,16 +104,9 @@ int implFindNavGoal (uint8_t *mapArr, int height, int width, int posY, int posX,
         }
     }
     if (endpoints.size() == 0)
-        return 1;   // COMPLETED
-    // else{
-    //     for (int i = 0; i < 20; i += 2) {
-    //         res[i] = endpoints.back().x;
-    //         res[i+1] = endpoints.back().y;
-    //         endpoints.pop_back();
-    //     }
-    // }
-    for (auto itr = endpoints.begin(); itr != endpoints.end(); itr++)
-        mapB[itr->y][itr->x] = ENDPOINT;
+        return 1;   // No Endpoint => Map COMPLETED
+    for (auto p : endpoints)
+        mapB[p.y][p.x] = ENDPOINT;
     
     // 3rd step: group the endpoints connected by frontiers
     vector< vector<point_t> > epGrps;
@@ -142,23 +136,37 @@ int implFindNavGoal (uint8_t *mapArr, int height, int width, int posY, int posX,
         }
     }
     
-    // 4th step: Find their mid-points
-    // Usually there will be 2 endpoints for each frontier. For now, if there are
-    // more endpoints, we use the two farthest from the robot.
+    // 4th step: Find their mid-points and directions
+    point_t posBot = {.x = posX, .y = posY};
     vector<point_t> midpoints;
-    for (auto itr = epGrps.begin(); itr != epGrps.end(); itr++) {
-        if (itr->size() > 2) {
-            std::sort(itr->begin(), itr->end(), [posX, posY](point_t a, point_t b) {
+    vector<float> dirs;
+    for (auto& epg : epGrps) {
+        if (epg.size() > 2) {
+            // Usually there will be 2 endpoints for each frontier. For now, if there are
+            // more endpoints, we use the two farthest from the robot.
+            std::sort(epg.begin(), epg.end(), [posX, posY](point_t a, point_t b) {
                 float da = sqrt(powf(a.x - posX, 2) + powf(a.y - posY, 2));
                 float db = sqrt(powf(b.x - posX, 2) + powf(b.y - posY, 2));
                 return da > db;
             });
-            while (itr->size() > 2) itr->pop_back();
+            while (epg.size() > 2) epg.pop_back();
         }
-        midpoints.push_back((point_t){
-            .x = (itr->at(0).x + itr->at(1).x) / 2,
-            .y = (itr->at(0).y + itr->at(1).y) / 2
-        });
+        // Calculate midpoint
+        point_t mp = {
+            .x = (epg[0].x + epg[1].x) / 2,
+            .y = (epg[0].y + epg[1].y) / 2
+        };
+        midpoints.push_back(mp);
+        // Calculate direction
+        float lineDir = findDirection(epg[0], epg[1]);
+        float routeDir = findDirection(posBot, mp);
+        float goalDir = 
+            diffSmallerDirection(lineDir + M_PI_2, routeDir) < 
+            diffSmallerDirection(lineDir - M_PI_2, routeDir) ?
+            (lineDir + M_PI_2) : (lineDir - M_PI_2);
+        goalDir = (goalDir > M_PI) ? goalDir - 2 * M_PI : 
+            (goalDir < -M_PI) ? goalDir + 2 * M_PI : goalDir;
+        dirs.push_back(goalDir);
     }
     std::sort(midpoints.begin(), midpoints.end(), [posX, posY](point_t a, point_t b) {
         float da = sqrt(powf(a.x - posX, 2) + powf(a.y - posY, 2));
@@ -172,6 +180,7 @@ int implFindNavGoal (uint8_t *mapArr, int height, int width, int posY, int posX,
         if (count >= res[0]) break;
         res[count * 2 + 1] = p.x;
         res[count * 2 + 2] = p.y;
+        resDir[count] = dirs[count];
         count++;
     }
     res[0] = count;
@@ -183,20 +192,47 @@ point_t findCentre (vector<point_t> pts)
     if (pts.size() == 0)
         return (point_t){.x = 0, .y = 0};
     float xsum = 0, ysum = 0;
-    for (auto itr = pts.begin(); itr != pts.end(); itr++) {
-        xsum += itr->x;
-        ysum += itr->y;
+    for (auto p : pts) {
+        xsum += p.x;
+        ysum += p.y;
     }
     xsum /= pts.size();
     ysum /= pts.size();
-    point_t ctr = pts.back();
-    float mindist = sqrt(powf(pts.back().x - xsum, 2) + powf(pts.back().y - ysum, 2));
-    pts.pop_back();
-    while (!pts.empty()) {
-        float currdist = sqrt(powf(pts.back().x - xsum, 2) + powf(pts.back().y - ysum, 2));
-        ctr = (currdist < mindist) ? pts.back() : ctr;
-        mindist = (currdist < mindist) ? currdist : mindist;
-        pts.pop_back();
-    }
-    return ctr;
+
+    std::sort(pts.begin(), pts.end(), [xsum, ysum](point_t a, point_t b) {
+        float da = sqrt(powf(a.x - xsum, 2) + powf(a.y - ysum, 2));
+        float db = sqrt(powf(b.x - xsum, 2) + powf(b.y - ysum, 2));
+        return da < db;
+    });
+    return pts.front();
+
+    // point_t ctr = pts.back();
+    // float mindist = sqrt(powf(pts.back().x - xsum, 2) + powf(pts.back().y - ysum, 2));
+    // pts.pop_back();
+    // while (!pts.empty()) {
+    //     float currdist = sqrt(powf(pts.back().x - xsum, 2) + powf(pts.back().y - ysum, 2));
+    //     ctr = (currdist < mindist) ? pts.back() : ctr;
+    //     mindist = (currdist < mindist) ? currdist : mindist;
+    //     pts.pop_back();
+    // }
+    // return ctr;
+}
+
+float findDirection (point_t a, point_t b)  // in radian
+{
+    float dx = b.x - a.x;
+    float dy = b.y - a.y;
+    float mag = sqrt(dx * dx + dy * dy);
+    dy /= mag;  // cos(theta) == (0, 1) . (dx, dy)_unitvec = dy
+    if (signbit(dx)) return -acos(dy);
+    else return acos(dy);
+}
+
+float diffSmallerDirection (float a, float b)   // in radian
+{
+    float res = a - b;
+    while (res < 0) res += 2 * M_PI;
+    while (res > 2 * M_PI) res -= 2 * M_PI;
+    if (res > M_PI) res = 2 * M_PI - res;
+    return res;
 }

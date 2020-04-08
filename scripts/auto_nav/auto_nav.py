@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import tf2_ros
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 # # Cython nav_map_handling.pyx (Too slow, do not use)
 # import pyximport
@@ -30,6 +31,8 @@ class AutoNav:
             rospy.Subscriber("move_base_simple/goal", PoseStamped, self._cbGoal, self))
         self._subscription.append(
             rospy.Subscriber("map", OccupancyGrid, self._cbMap, self))
+        self._publisher = {}
+        self._publisher['navgoal'] = rospy.Publisher("move_base_simple/goal", PoseStamped, queue_size=1)
 
     def __del__(self):
         if self._plt: plt.ioff()
@@ -49,8 +52,10 @@ class AutoNav:
 
     @staticmethod
     def _cbGoal(msg, s):
-        print(msg.pose.position.x, msg.pose.position.y)
-        print(msg.pose.orientation.x, msg.pose.orientation.y)
+        print(msg.pose.position.x, msg.pose.position.y, msg.pose.position.z)
+        quat = [msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w]
+        (roll, pitch, yaw) = euler_from_quaternion(quat)
+        print(roll, pitch, yaw)
         print(msg.header.stamp.to_time())
     
     @staticmethod
@@ -60,7 +65,7 @@ class AutoNav:
         trans = s._tfBuffer.lookup_transform('map', 'base_link', rospy.Time(0))
         robotX = (trans.transform.translation.x - msg.info.origin.position.x) / msg.info.resolution
         robotY = (trans.transform.translation.y - msg.info.origin.position.y) / msg.info.resolution
-        print(robotX, robotY)
+        # print(robotX, robotY)
         # Convert map into numpy array
         mWidth = msg.info.width
         mHeight = msg.info.height
@@ -69,7 +74,19 @@ class AutoNav:
         mData = np.uint8((mData > 0).choose(mData + 1,2))
         # Smooth the map by dilation and erosion
         mData = MapDilateErode(mData)
-        print(FindNavGoal(mData, robotX, robotY))
+        # Find the navigation goal
+        (done, goalList) = FindNavGoal(mData, robotX, robotY)
+        print(done, goalList)
+        # Publish the goal to the nav stack 
+        # TODO: INCORRECT IMPLEMENTATION
+        # The position does not seems to be specified in unit of map grid pixels
+        # Quatenion conversion may be wrong
+        posecmd = PoseStamped()
+        posecmd.header.stamp = rospy.Time.now()
+        (posecmd.pose.position.x, posecmd.pose.position.y, posecmd.pose.position.z) = (goalList[0][0], goalList[0][1], 0)
+        quat = quaternion_from_euler(0, 0, goalList[0][2])
+        (posecmd.pose.orientation.x, posecmd.pose.orientation.y, posecmd.pose.orientation.y, posecmd.pose.orientation.w) = quat
+        # s._publisher['navgoal'].publish(posecmd)
         # Plot the map
         if s._plt:
             plt.imshow(mData, cmap='gray')
