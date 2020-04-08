@@ -7,20 +7,24 @@ from sensor_msgs.msg import Image, LaserScan
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import tf2_ros
 
 # # Cython nav_map_handling.pyx (Too slow, do not use)
 # import pyximport
 # pyximport.install()
 # from nav_map_handling import MapDilateErode
 
-from navMapProc_wrp import MapDilateErode
+from navMapProc_wrp import MapDilateErode, FindNavGoal
 
 class AutoNav: 
 
     def __init__(self, nodeName, updRate, pltMap=False):
         rospy.init_node(nodeName)
         self._rosRate = rospy.Rate(updRate)
-        self._plt = pltMap    
+        self._plt = pltMap
+        self._tfBuffer = tf2_ros.Buffer()
+        self._tfListener = tf2_ros.TransformListener(self._tfBuffer)
+        rospy.sleep(1.0)
         self._subscription = []
         self._subscription.append(
             rospy.Subscriber("move_base_simple/goal", PoseStamped, self._cbGoal, self))
@@ -34,7 +38,6 @@ class AutoNav:
     def spin(self):
         if self._plt:
             plt.ion()
-            plt.tight_layout()
             plt.show()
         while not rospy.is_shutdown():
             try:
@@ -53,6 +56,11 @@ class AutoNav:
     @staticmethod
     def _cbMap(msg, s):
         print("Map received")
+        # Retrieve robot position
+        trans = s._tfBuffer.lookup_transform('map', 'base_link', rospy.Time(0))
+        robotX = (trans.transform.translation.x - msg.info.origin.position.x) / msg.info.resolution
+        robotY = (trans.transform.translation.y - msg.info.origin.position.y) / msg.info.resolution
+        print(robotX, robotY)
         # Convert map into numpy array
         mWidth = msg.info.width
         mHeight = msg.info.height
@@ -60,9 +68,8 @@ class AutoNav:
         # Mark points with 0 for unmapped, 1 for empty, 2 for wall
         mData = np.uint8((mData > 0).choose(mData + 1,2))
         # Smooth the map by dilation and erosion
-        t = time.time()
         mData = MapDilateErode(mData)
-        print(time.time() - t)
+        print(FindNavGoal(mData, robotX, robotY))
         # Plot the map
         if s._plt:
             plt.imshow(mData, cmap='gray')
