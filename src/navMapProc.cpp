@@ -103,8 +103,10 @@ int implFindNavGoal (uint8_t *mapArr, int height, int width, int posY, int posX,
             endpoints.push_back(findCentre(eppx));
         }
     }
-    if (endpoints.size() == 0)
+    if (endpoints.empty()) {
+        res[0] = 0; // No nav point returned
         return 1;   // No Endpoint => Map COMPLETED
+    }
     for (auto p : endpoints)
         mapB[p.y][p.x] = ENDPOINT;
     
@@ -135,6 +137,10 @@ int implFindNavGoal (uint8_t *mapArr, int height, int width, int posY, int posX,
             if (eps.size() >= 2) epGrps.push_back(eps);
         }
     }
+    if (epGrps.empty()) {
+        res[0] = 0; // No nav point returned
+        return 1;   // No Paired Endpoints => Map COMPLETED
+    }  
     
     // 4th step: Find their mid-points and directions
     point_t posBot = {.x = posX, .y = posY};
