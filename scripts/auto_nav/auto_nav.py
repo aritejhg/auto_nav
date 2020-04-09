@@ -11,11 +11,6 @@ import time
 import tf2_ros
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
-# # Cython nav_map_handling.pyx (Too slow, do not use)
-# import pyximport
-# pyximport.install()
-# from nav_map_handling import MapDilateErode
-
 from navMapProc_wrp import MapDilateErode, FindNavGoal
 
 class AutoNav: 
@@ -80,6 +75,7 @@ class AutoNav:
         (done, goalList) = FindNavGoal(mData, robotX, robotY)
         # Publish the goal to the nav stack
         if done:
+            print("Finished.")
             cancelGoal = GoalID()
             s._publisher['navgoal_cancel'].publish(cancelGoal)
         else:

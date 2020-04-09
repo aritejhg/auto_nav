@@ -136,3 +136,5 @@ dmypy.json
 .pyre/
 
 # GITIGNORE FOR PYTHON ENDS
+
+/unused_files/
