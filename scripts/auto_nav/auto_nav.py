@@ -39,6 +39,7 @@ class AutoNav:
         self._publisher['navgoal_cancel'].publish(GoalID())
         self._publisher['navdone'] = rospy.Publisher("auto_nav/navdone", String, queue_size=1)
         self._goalSeq = 0   # next available sequence number for goal
+        self._lastGoal = (False, [])
 
     def __del__(self):
         if self._plt: plt.ioff()
