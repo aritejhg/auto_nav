@@ -4,6 +4,7 @@ import numpy as np
 import math
 from picamera.array import PiRGBArray
 from picamera import PiCamera
+from geometry_msgs.msg import Twist
 
 # setting the raspberry pi resolution and frame rate
 camera = PiCamera()
@@ -18,6 +19,11 @@ height = rawCapture.get(cv2.CAP_PROP_FRAME_HEIGHT)
 centre = (int(width/2), int(height/2))
 # allow the camera to warmup
 time.sleep(0.1)
+
+#rotation object
+rospy.Publisher("/cmd_vel", Twist, queue_size=1)
+rot = Twist()
+
 
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
 	image = frame.array
@@ -71,9 +77,9 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 		elif dist_from_centre[0]>20:
 			turn bot left 
 		elif dist_from_centre[1] <0:
-			move bot up 
+			move tilt up 
 		elif dist_from_centre[1] >0:
-			move bot down
+			move tilt down
 		else:
 			shoot '''
 
