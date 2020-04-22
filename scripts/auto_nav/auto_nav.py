@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 import rospy
+from std_msgs.msg import String
 from nav_msgs.msg import Odometry, OccupancyGrid
-from geometry_msgs.msg import Vector3, PoseStamped
+from geometry_msgs.msg import Vector3, PoseStamped, Pose
 from sensor_msgs.msg import Image, LaserScan
 from actionlib_msgs.msg import GoalID
 import numpy as np
@@ -27,10 +28,16 @@ class AutoNav:
             rospy.Subscriber("move_base_simple/goal", PoseStamped, self._cbGoal, self))
         self._subscription.append(
             rospy.Subscriber("map", OccupancyGrid, self._cbMap, self))
+        self._subscription.append(
+            rospy.Subscriber("auto_nav/seen_target", String, self._cbSeenTarget, self))
+        self._shootPos = Pose()
+        self._atShootPos = False
+        self._completed = False
         self._publisher = {}
         self._publisher['navgoal'] = rospy.Publisher("move_base_simple/goal", PoseStamped, queue_size=1)
         self._publisher['navgoal_cancel'] = rospy.Publisher("move_base/cancel", GoalID, queue_size=1)
         self._publisher['navgoal_cancel'].publish(GoalID())
+        self._publisher['navdone'] = rospy.Publisher("auto_nav/navdone", String, queue_size=1)
         self._goalSeq = 0   # next available sequence number for goal
 
     def __del__(self):
@@ -75,13 +82,28 @@ class AutoNav:
         (done, goalList) = FindNavGoal(mData, robotX, robotY)
         # Publish the goal to the nav stack
         if done:
-            print("Finished.")
-            cancelGoal = GoalID()
-            s._publisher['navgoal_cancel'].publish(cancelGoal)
+            distToShootPos = ((robotX - s._shootPos.position.x)**2 + (robotY - s._shootPos.position.y)**2)**0.5
+            if distToShootPos < 3:
+                s._atShootPos = True
+            if not s._atShootPos:
+                print("Finished mapping, going to shooting position.")
+                posecmd = PoseStamped()
+                posecmd.header.frame_id = "map"
+                posecmd.header.stamp = rospy.Time.now()
+                posecmd.header.seq = s._goalSeq
+                posecmd.pose = s._shootPos
+                s._publisher['navgoal'].publish(posecmd)
+            elif not s._completed:
+                print("Auto navigation done.")
+                s._completed = True
+                cancelGoal = GoalID()
+                s._publisher['navgoal_cancel'].publish(cancelGoal)
+                s._publisher['navdone'].publish("DONE")
         else:
             posecmd = PoseStamped()
             posecmd.header.frame_id = "map"
             posecmd.header.stamp = rospy.Time.now()
+            posecmd.header.seq = s._goalSeq
             posecmd.pose.position.x = goalList[0][0] * msg.info.resolution + msg.info.origin.position.x
             posecmd.pose.position.y = goalList[0][1] * msg.info.resolution + msg.info.origin.position.y
             posecmd.pose.position.z = 0
@@ -94,6 +116,15 @@ class AutoNav:
             plt.draw_all()
             plt.pause(0.00000000001)
 
+    @staticmethod
+    def _cbSeenTarget(msg, s):
+        # The current pose will be marked for the bot to go back after finishing mapping
+        # Each time the a message on this topic is received, the pose will be updated
+        print("Position recorded.")
+        trans = s._tfBuffer.lookup_transform('map', 'base_link', rospy.Time(0))
+        p = Pose()
+        p.position = trans.translation
+        p.orientation = trans.rotation
 
 if __name__ == "__main__":
     a = AutoNav("auto_nav_node", 2, pltMap=True)
