@@ -27,19 +27,18 @@ time.sleep(0.1)
 rospy.Publisher("/cmd_vel", Twist, queue_size=1)
 rot = Twist()
 
-
-#to publish the percentage of the red colour detected 
+#to publish the percentage of the red colour detected to auto_nav
 target_pub = rospy.Publisher("auto_nav/seen_target", String, queue_size=1)
 percentage_1 = float(0)
 
-# to get the "Done" message from auto_nav to continue target detection
-nav_done = rospy.Subscriber("auto_nav/navdone", String, queue_size=1)
+def callback(msg):
+	print(msg)
+
 
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
 	image = frame.array
-
 	hsv_frame = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
-
+	
 	#lower mask(0-10)
 	lower_red = np.array([0,100,100])
 	upper_red = np.array([10,255,255])
@@ -70,6 +69,9 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 	gray = cv2.cvtColor(red_image, cv2.COLOR_BGR2GRAY)
 	ret, threshImg = cv2.threshold(gray, 27, 255, cv2.THRESH_BINARY)
 	drawnImage = red_image
+	
+	# to get the "Done" message from auto_nav to continue target detection and shooting
+	nav_done = rospy.Subscriber("auto_nav/navdone", String, callback)
 	
 	if nav_done == "Done":
   	  # find the contours in the thresholded image...
