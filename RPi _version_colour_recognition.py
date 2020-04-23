@@ -62,9 +62,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 		percentage_1 = percentage
 		target_pub.publish(String("colour detected"))
 	#print('percentage is', percentage)
-		
-	'''if detected percentage is !=0, and percentage <4 move bot towards the target
-	if percentage is at least 4 %, shoot'''
+
 
 	gray = cv2.cvtColor(red_image, cv2.COLOR_BGR2GRAY)
 	ret, threshImg = cv2.threshold(gray, 27, 255, cv2.THRESH_BINARY)
@@ -74,7 +72,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 	nav_done = rospy.Subscriber("auto_nav/navdone", String, callback)
 	
 	if nav_done == "Done":
-  	  # find the contours in the thresholded image...
+  		# find the contours in the thresholded image...
 		contours, high = cv2.findContours(threshImg, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 		for c in contours:
 			if cv2.contourArea(c) < 4000:
