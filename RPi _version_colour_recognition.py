@@ -139,10 +139,11 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 				time.sleep(1.3)
 				vel_msg.linear.x=0.1
 				pub.publish(vel_msg)
+				distance-=13
+				
 			dist_from_cent = [centre[0]-Centroid[0], centre[1]-Centroid[1]			
 					  
 			while dist_from_cent[0]>8 or dist_from_cent[0]<-8:
-					  
 					  if dist_from_centre[0] <-8:
 					  	rot.angular.z=-0.2
 					  	pub.publish(rot)
@@ -155,6 +156,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 					  	time.sleep(2)
 					  	rot.angular.z=0
 					  	pub.publish(rot)
+					  dist_from_centre[0]=centre[0]-Centroid[0]-3
+					  
 			while dist_from_cent[1]>3 or dist_from_cent[1]<-3:
 					  if dist_from_centre[1] <-3:
 					  	tmotorpwm.ChangeDutyCycle(8.0)
@@ -166,6 +169,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 					  	time.sleep(0.5)
 					  	tmotorpmw.ChangeDutyCycle(7.5)
 					  	time.sleep(1)
+					  dist_from_centre[1]=centre[1]-Centroid[1]-2
 					
 				
 			#aiming done led blinks twice
