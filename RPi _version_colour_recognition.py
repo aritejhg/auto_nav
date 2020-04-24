@@ -20,12 +20,18 @@ GPIO.setup(gate,GPIO.OUT)
 tmotor = 12
 GPIO.setup (tmotor, GPIO.OUT)
 tmotorpwm= GPIO.PWM(tmotor,50)
-
+tmotorpwm.start(0)
 lmotor = 18
 GPIO.setup(lmotor,GPIO.OUT)
 lmotorpwm=GPIO.pwm(lmotor,50)
 lmotorpwm.start(5)
-#for rotation 
+Trig_sr04=23
+GPIO.setup(Trig_sr04, GPIO.OUT)
+GPIO.output(Trig_sr04, False)
+Echo_sr04=24
+GPIO.setup(Echo_sr04, GPIO.IN)
+
+#for rotation of turtlebot
 pub=rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 rate= rospy.Rate(1)
 rot = Twist()
@@ -112,17 +118,26 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 			cv2.circle(drawnImage, Centroid, 1, (54, 255, 164), 4)
 			cv2.circle(drawnImage, centre, 1, (115, 0, 255), 4)
 			
-			while 
-			dist_from_cent = [centre[0]-Centroid[0], centre[1]-Centroid[1]]
-			print ('centre_dist =', dist_from_cent)
-			
-			
+			#Find distance using SR04
+			GPIO.output(Trig_sr04, True)
+			time.sleep(0.00001)
+			GPIO.output(Trig_sr04, False)
+			while GPIO.input(Echo_sr04)==0:
+				pulse_start = time.time()
+			while GPIO.input(Echo_sr04)==1:
+				pulse_end = time.time()
+			distance = (pulse_end - pulse_start) x 17150
+			if distance >250:
+				
 
-			
+			dist_from_cent = [centre[0]-Centroid[0], centre[1]-Centroid[1]			
+					  
+			while dist_from_cent[0]>   or dist_from_cent[0]<   :
 				if dist_from_centre[0] <0:
-					turn bot towards right
+					turn bot towards right, Twist
 				elif dist_from_centre[0]>20:
-					turn bot left 
+					turn bot left Twist
+			while dist_from_cent[1]>   or dist_from_cent[1]<   :
 				elif dist_from_centre[1] <0:
 					move tilt up 
 				elif dist_from_centre[1] >0:
@@ -139,13 +154,13 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 			#shooting
 			#limiter motor control
 			lmotorpwm.ChangeDutyCycle(10)
-			time.sleep(1)
+			time.sleep(0.5)
 			lmotorpwm.ChangeDutyCycle(5)
 			time.sleep(1)
 			
-			#MOSFET gate control
+			#MOSFET gate control for shooting
 			GPIO.output(gate, GPIO.HIGH)
-			time.sleep(1)
+			time.sleep(2)
 			GPIO.output(gate, GPIO.LOW)
 			time.sleep(1)
 			
