@@ -32,9 +32,10 @@ Echo_sr04=24
 GPIO.setup(Echo_sr04, GPIO.IN)
 
 #for rotation of turtlebot
-pub=rospy.Publisher('/cmd_vel', Twist, queue_size=1)
+pub=rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 rate= rospy.Rate(1)
 rot = Twist()
+vel_msg=()
 
 # setting the raspberry pi resolution and frame rate
 camera = PiCamera()
@@ -127,9 +128,17 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 			while GPIO.input(Echo_sr04)==1:
 				pulse_end = time.time()
 			distance = (pulse_end - pulse_start) x 17150
-			if distance >250:
-				
-
+			while distance >250:
+				vel_msg.linear.y = 0
+				vel_msg.linear.z = 0
+				vel_msg.angular.x = 0
+				vel_msg.angular.y = 0
+				vel_msg.angular.z = 0
+ 				vel_msg.linear.x=0.1
+				pub.publish(vel_msg)
+				time.sleep(1.3)
+				vel_msg.linear.x=0.1
+				pub.publish(vel_msg)
 			dist_from_cent = [centre[0]-Centroid[0], centre[1]-Centroid[1]			
 					  
 			while dist_from_cent[0]>8 or dist_from_cent[0]<-8:
