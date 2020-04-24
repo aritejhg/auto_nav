@@ -179,13 +179,13 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 			#shooting
 			#limiter motor control
 			lmotorpwm.ChangeDutyCycle(10)
-			time.sleep(0.5)
+			time.sleep(10)
 			lmotorpwm.ChangeDutyCycle(5)
 			time.sleep(1)
 			
 			#MOSFET gate control for shooting
 			GPIO.output(gate, GPIO.HIGH)
-			time.sleep(2)
+			time.sleep(15)
 			GPIO.output(gate, GPIO.LOW)
 			time.sleep(1)
 			
