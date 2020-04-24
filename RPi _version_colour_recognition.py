@@ -20,10 +20,11 @@ GPIO.setup(gate,GPIO.OUT)
 tmotor = 12
 GPIO.setup (tmotor, GPIO.OUT)
 tmotorpwm= GPIO.PWM(tmotor,50)
+
 lmotor = 18
 GPIO.setup(lmotor,GPIO.OUT)
 lmotorpwm=GPIO.pwm(lmotor,50)
-
+lmotorpwm.start(5)
 #for rotation 
 pub=rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 rate= rospy.Rate(1)
@@ -105,6 +106,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 			GPIO.output(led,GPIO.HIGH)
 			time.sleep(1)
 			GPIO.output(led,GPIO.LOW)
+			time.sleep(1)
 			
 			Centroid = (int((x + x + w) /2), int((y + y + h) /2))
 			cv2.circle(drawnImage, Centroid, 1, (54, 255, 164), 4)
@@ -117,16 +119,42 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 			
 
 			
-			if dist_from_centre[0] <0:
-				turn bot towards right
-			elif dist_from_centre[0]>20:
-				turn bot left 
-			elif dist_from_centre[1] <0:
-				move tilt up 
-			elif dist_from_centre[1] >0:
-				move tilt down
-			else:
-				shoot 
+				if dist_from_centre[0] <0:
+					turn bot towards right
+				elif dist_from_centre[0]>20:
+					turn bot left 
+				elif dist_from_centre[1] <0:
+					move tilt up 
+				elif dist_from_centre[1] >0:
+					move tilt down
+				
+			#aiming done led blinks twice
+			for f in range(2):
+				GPIO.output(led,GPIO.HIGH)
+				time.sleep(1)
+				GPIO.output(led,GPIO.LOW)
+				time.sleep(1)
+			
+
+			#shooting
+			#limiter motor control
+			lmotorpwm.ChangeDutyCycle(10)
+			time.sleep(1)
+			lmotorpwm.ChangeDutyCycle(5)
+			time.sleep(1)
+			
+			#MOSFET gate control
+			GPIO.output(gate, GPIO.HIGH)
+			time.sleep(1)
+			GPIO.output(gate, GPIO.LOW)
+			time.sleep(1)
+			
+			#shooting done, led blinks thrice]
+			for k in range (3):
+				GPIO.output(led,GPIO.HIGH)
+				time.sleep(1)
+				GPIO.output(led,GPIO.LOW)
+				time.sleep(1)   
 
 	cv2.imshow(winName, drawnImage)
 
