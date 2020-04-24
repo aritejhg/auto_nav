@@ -132,16 +132,32 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 
 			dist_from_cent = [centre[0]-Centroid[0], centre[1]-Centroid[1]			
 					  
-			while dist_from_cent[0]>   or dist_from_cent[0]<   :
-				if dist_from_centre[0] <0:
-					turn bot towards right, Twist
-				elif dist_from_centre[0]>20:
-					turn bot left Twist
-			while dist_from_cent[1]>   or dist_from_cent[1]<   :
-				elif dist_from_centre[1] <0:
-					move tilt up 
-				elif dist_from_centre[1] >0:
-					move tilt down
+			while dist_from_cent[0]>8 or dist_from_cent[0]<-8:
+					  
+					  if dist_from_centre[0] <-8:
+					  	rot.angular.z=-0.2
+					  	pub.publish(rot)
+					  	time.sleep(2)
+					  	rot.angular.z=0
+					  	pub.publish(rot)
+					  elif dist_from_centre[0]>8:
+					  	rot.angular.z=0.2
+					  	pub.publish(rot)
+					  	time.sleep(2)
+					  	rot.angular.z=0
+					  	pub.publish(rot)
+			while dist_from_cent[1]>3 or dist_from_cent[1]<-3:
+					  if dist_from_centre[1] <-3:
+					  	tmotorpwm.ChangeDutyCycle(8.0)
+					  	time.sleep(0.5)
+					  	tmotorpmw.ChangeDutyCycle(7.5)
+					  	time.sleep(1)
+					  elif dist_from_centre[1] >0:
+					  	tmotorpwm.ChangeDutyCycle(8.0)
+					  	time.sleep(0.5)
+					  	tmotorpmw.ChangeDutyCycle(7.5)
+					  	time.sleep(1)
+					
 				
 			#aiming done led blinks twice
 			for f in range(2):
