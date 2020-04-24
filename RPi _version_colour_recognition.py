@@ -1,12 +1,33 @@
+#! /usr/bin/env python
+
 import time
 import cv2
 import numpy as np
 import math
 from picamera.array import PiRGBArray
 from picamera import PiCamera
-from geometry_msgs.msg import 
+import rospy
+from geometry_msgs.msg import Twist
 from std_msgs.msg import String
+import RPi.GPIO as GPIO
 
+#pin setup
+GPIO.setmode (GPIO.BCM):
+led = 27
+GPIO.setup(led,GPIO.OUT)
+gate =16
+GPIO.setup(gate,GPIO.OUT)
+tmotor = 12
+GPIO.setup (tmotor, GPIO.OUT)
+tmotorpwm= GPIO.PWM(tmotor,50)
+lmotor = 18
+GPIO.setup(lmotor,GPIO.OUT)
+lmotorpwm=GPIO.pwm(lmotor,50)
+
+#for rotation 
+pub=rospy.Publisher('/cmd_vel', Twist, queue_size=1)
+rate= rospy.Rate(1)
+rot = Twist()
 
 # setting the raspberry pi resolution and frame rate
 camera = PiCamera()
@@ -79,15 +100,24 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 				continue
 			(x,y,w,h)= cv2.boundingRect(c)
 			cv2.rectangle(drawnImage,(x,y),(x+w,y+h),(255,0,0),2)
-
+			
+			#make led flash once to indicate detection
+			GPIO.output(led,GPIO.HIGH)
+			time.sleep(1)
+			GPIO.output(led,GPIO.LOW)
+			
 			Centroid = (int((x + x + w) /2), int((y + y + h) /2))
 			cv2.circle(drawnImage, Centroid, 1, (54, 255, 164), 4)
 			cv2.circle(drawnImage, centre, 1, (115, 0, 255), 4)
-
+			
+			while 
 			dist_from_cent = [centre[0]-Centroid[0], centre[1]-Centroid[1]]
 			print ('centre_dist =', dist_from_cent)
+			
+			
 
-			'''if dist_from_centre[0] <0:
+			
+			if dist_from_centre[0] <0:
 				turn bot towards right
 			elif dist_from_centre[0]>20:
 				turn bot left 
@@ -96,7 +126,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 			elif dist_from_centre[1] >0:
 				move tilt down
 			else:
-				shoot '''
+				shoot 
 
 	cv2.imshow(winName, drawnImage)
 
@@ -106,4 +136,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 	if key == ord("q"):
 		break
 rawCapture.release()
+lmotorpwm.stop()
+tmotorpwm.stop()
+GPIO.cleanup()
 cv2.destroyAllWindows()
