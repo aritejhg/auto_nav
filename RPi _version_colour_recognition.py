@@ -10,6 +10,7 @@ import rospy
 from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 import RPi.GPIO as GPIO
+import math
 
 #pin setup
 GPIO.setmode (GPIO.BCM):
@@ -141,35 +142,33 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 				pub.publish(vel_msg)
 				distance-=13
 				
-			dist_from_cent = [centre[0]-Centroid[0], centre[1]-Centroid[1]			
+			dist_from_cent = [centre[0]-Centroid[0], centre[1]-Centroid[1]
 					  
-			while dist_from_cent[0]>8 or dist_from_cent[0]<-8:
-					  if dist_from_centre[0] <-8:
-					  	rot.angular.z=-0.2
-					  	pub.publish(rot)
-					  	time.sleep(2)
-					  	rot.angular.z=0
-					  	pub.publish(rot)
-					  elif dist_from_centre[0]>8:
-					  	rot.angular.z=0.2
-					  	pub.publish(rot)
-					  	time.sleep(2)
-					  	rot.angular.z=0
-					  	pub.publish(rot)
-					  dist_from_centre[0]-=3
+			sleeptime=(asin(w/(2*distance)))*0.087)
+                	if dist_from_centre[0] <-8:
+				rot.angular.z=-0.2
+			  	pub.publish(rot)
+			  	time.sleep(sleeptime)
+			  	rot.angular.z=0
+			  	pub.publish(rot)
+			elif dist_from_centre[0]>8:
+			  	rot.angular.z=0.2
+			  	pub.publish(rot)
+			  	time.sleep(sleeptime)
+			  	rot.angular.z=0
+			  	pub.publish(rot)
 					  
-			while dist_from_cent[1]>3 or dist_from_cent[1]<-3:
-					  if dist_from_centre[1] <-3:
-					  	tmotorpwm.ChangeDutyCycle(8.0)
-					  	time.sleep(0.5)
-					  	tmotorpmw.ChangeDutyCycle(7.5)
-					  	time.sleep(1)
-					  elif dist_from_centre[1] >0:
-					  	tmotorpwm.ChangeDutyCycle(8.0)
-					  	time.sleep(0.5)
-					  	tmotorpmw.ChangeDutyCycle(7.5)
-					  	time.sleep(1)
-					  dist_from_centre[1]-=2
+			sleeptime2=asin(h/(2*distance))*0.0115
+			if dist_from_centre[1] <-3:
+			 	tmotorpwm.ChangeDutyCycle(8.0)
+			  	time.sleep(sleeptime2)
+			  	tmotorpmw.ChangeDutyCycle(7.5)
+			  	time.sleep(1)
+			elif dist_from_centre[1] >0:
+			  	tmotorpwm.ChangeDutyCycle(8.0)
+			  	time.sleep(sleeptime2)
+			  	tmotorpmw.ChangeDutyCycle(7.5)
+			  	time.sleep(1)
 					
 				
 			#aiming done led blinks twice
