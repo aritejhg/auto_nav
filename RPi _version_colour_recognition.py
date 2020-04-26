@@ -144,7 +144,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 				
 			dist_from_cent = [centre[0]-Centroid[0], centre[1]-Centroid[1]
 					  
-			sleeptime=(asin(w/(2*distance)))*0.087)
+			sleeptime=(asin(dist_from_cent[0]/(2*distance)))*0.087)
                 	if dist_from_centre[0] <-8:
 				rot.angular.z=-0.2
 			  	pub.publish(rot)
@@ -158,7 +158,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 			  	rot.angular.z=0
 			  	pub.publish(rot)
 					  
-			sleeptime2=asin(h/(2*distance))*0.0115
+			sleeptime2=asin(dist_from_cent[1]/(2*distance))*0.0115
 			if dist_from_centre[1] <-3:
 			 	tmotorpwm.ChangeDutyCycle(8.0)
 			  	time.sleep(sleeptime2)
